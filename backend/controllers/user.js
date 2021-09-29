@@ -1,58 +1,51 @@
-const bcrypt = require('bcrypt')
+const User = require('../models/user');
+const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const User = require('../models/User')
+const crypto = require('crypto-js');
+require('dotenv').config({path: 'config.env'});
 
-const TOKEN = process.env.TOKEN;
+const key = crypto.enc.Base64.parse(process.env.CR_KEY);
+const iv = crypto.enc.Base64.parse(process.env.CR_IV);
 
-// Function pour création et connexion utilisateur 
-
-// SIGNUP 
-
-exports.signup = (req, res, next) => {
-  // mot de passe non accepté 
-  if (!/(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.{6,})/.test(req.body.password)) {   // test de l'efficasiter du mot de passe 
-    return res.status(401).json({ error: 'Le mot de passe doit contenir une lettre majuscule, une minuscule et au moins 1 chiffre (6 caractères min)' });
-  } else {
-    // si le mot de passe est accepté
-    bcrypt.hash(req.body.password, 10)
-      .then(hash => {
-        const user = new User({
-          email: req.body.email,
-          password: hash
-        })
+exports.signup = (req,res,next) =>{
+    const secretMail = crypto.AES.encrypt(req.body.email, key, {iv : iv}).toString(); 
+    bcrypt.hash(req.body.password,10)
+    .then(hash => { 
+        const user = new User({ // Créer l'utilisateur, si l'adresse est déjà utilisée on aura une erreur grâce à la vérif mongo
+            email: secretMail, 
+            password: hash,
+        });
         user.save()
-          .then(() => res.status(201).json({ message: 'Utilisateur créé !' }))
-          .catch(error => res.status(400).json({ error }));
-      })
-      .catch(error => res.status(500).json({ error }));
-  }
-};
-
-// LOGIN 
-
-exports.login = (req, res, next) => {
-  User.findOne({ email: req.body.email }) // cherche l'utilisateur 
-    .then(user => {
-      if (!user) { // si l'utilisateur n'est pas trouvé
-        return res.status(401).json({ error: 'Utilisateur non trouvé !' });
-      }
-      bcrypt.compare(req.body.password, user.password) // si l'utilisateur est trouvé ont compare le MDP donné avec celui dans la base de donnée
-        .then(valid => { 
-          if (!valid) { 
-            return res.status(401).json({ error: 'Mot de passe incorrect !' });
-          }
-          res.status(200).json({ 
-            userId: user._id,
-            token: jwt.sign(
-              { userId: user._id },
-              TOKEN,
-              { expiresIn: '8h' }
-            )
-          });
-        })
-        .catch(error => res.status(500).json({ error }));
+        .then(() => res.status(201).json({message: "Utilisateur ajouté à la base de donnée"}))
+        .catch(error => res.status(400).json({error}));
     })
-    .catch(error => res.status(500).json({ error }));
+    .catch(error => res.status(404).json({error}));
 };
 
+exports.login = (req,res,next) =>{
+    const secretMail = crypto.AES.encrypt(req.body.email, key, {iv : iv}).toString(); 
+    User.findOne({email: secretMail}) 
+    .then(user =>{
+        if (!user){
+            return res.status(404).json({error: "utilisateur inexisant"});
+        }
+        bcrypt.compare(req.body.password, user.password)
+        .then(valid =>{
+            if (!valid){
+                return res.status(401).json({error:"Mot de passe incorrect"});
+            }
+            else{
+                res.status(200).json({
+                    userId: user._id,
+                    token: jwt.sign(
+                        {userId: user._id},
+                        process.env.TOKEN,
+                    )
+                });
+            }
+        })
+        .catch(error => res.status(500).json({error: error}));
+    })
+    .catch(error => res.status(500).json({error})); 
+};
 

@@ -1,23 +1,25 @@
-# HOT TAKES #
+#PIIQUANTE - Projet 6 - Parcour développement Web
+***
+Le Frontend est fourni dans le projet.
 
-## Installation ##
+##Partie 1 - Implémenter les routes de l'API
 
-Here are the dependancies you need to install:
-- NodeJS 12.14 or 14.0.
-- Angular CLI 7.0.2.
-- node-sass : make sure to use the corresponding version to NodeJS. For Noe 14.0 for instance, you need node-sass in version 4.14+.
+1. S'inscrire et se connecter
+2. Voir les sauces disponibles
+3. Ajouter une sauce
+4. Modifier une sauce
+5. Supprimer une sauce
+6. Poster un like/dislike sur une sauce
 
-On Windows, these installations require to use PowerShell in administrator mode.
+##Partie 2 - Procéder mis en place pour la sécurité des données
 
-The, clone this repo and run `npm install`.
-
-
-## Usage ##
-
-Run `npm start`. This should both run the local server and launch your browser.
-
-If your browser fails to launch, or shows a 404 error, navigate your browser to http://localhost:8080.
-
-The app should reload automatically when you make a change to a file.
-
-Use `Ctrl+C` in the terminal to stop the local server.
+Utilisation du package helmet, permettant de protéger les headers dans les requêtes
+Configuration d'un fichier .env afin de ne pas faire apparaitre les données critiques dans le code (token / identifiants de connexion à la BDD / clé et IV pour AES)
+Cryptage du mot de passe avec Bcrypt
+Chiffrement de l'adresse mail avec AES
+Création d'un utilisateur avec des privilèges restreint au niveau de la base de données
+Création d'une règle pour les mots de passe afin de garantir un niveau minimum de sécurité, en plus du hashage
+Validation de l'adresse mail
+Limitation du nombre de tentatives de login
+Vérification des inputs afin d'éviter les injections
+Vérification supplémentaire de l'authentification avant requête de suppression
